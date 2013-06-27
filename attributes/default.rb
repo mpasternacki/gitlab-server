@@ -36,6 +36,7 @@
 
 	default['gitlab']['branch'] = '5-3-stable'
 	default['gitlab']['ruby_version'] = '1.9.3-p429'
+	default['gitlab']['webserver'] = 'nginx'
 
 # [--- WEB SERVER ---]
 
@@ -141,4 +142,3 @@
 	# When should the backup run?
 	# Specify "manually" or a cron string (min hour day month weekday)
 	default['gitlab']['backup']['run'] = "manually"
-
