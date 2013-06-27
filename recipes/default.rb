@@ -152,25 +152,34 @@ end
 
 if node['gitlab']['database']['manage_install']
 	# Database install
-	include_recipe "mysql::server"
+	include_recipe "#{node['gitlab']['sql_server']}::server"
 end
 
 if node['gitlab']['database']['manage_database']
-	include_recipe "database::mysql"
+	include_recipe "database::#{node['gitlab']['sql_server']}"
 
 	database_connection = {
 	  :host     => node['gitlab']['database']['hostname'],
 	  :port     => node['gitlab']['database']['port'],
 	  :username => node['gitlab']['database']['root_user'],
-	  :password => node['gitlab']['database']['root_password'].nil? ? 
-	               node['mysql']['server_root_password'] : 
-	               node['gitlab']['database']['root_password']
+	  :password => node['gitlab']['database']['root_password'] ? 
+	               node['gitlab']['database']['root_password'] :
+	               node['gitlab']['sql_server'] == 'mysql' ?
+	               node['mysql']['server_root_password'] :
+	               node['postgresql']['password']['postgres']
 	}
 
 	# Create the database
 	mysql_database node['gitlab']['database']['database'] do
 	  connection      database_connection
 	  action          :create
+	  only_if { node['gitlab']['sql_server'] == 'mysql' }
+	end
+
+	postgresql_database node['gitlab']['database']['database'] do
+	  connection      database_connection
+	  action          :create
+	  only_if { node['gitlab']['sql_server'] == 'postgresql' }
 	end
 
 	# Generate a secure password
@@ -186,8 +195,16 @@ if node['gitlab']['database']['manage_database']
 		password        node['gitlab']['database']['password']
 		database_name   node['gitlab']['database']['database']
 		action          [ :create, :grant ]
+		only_if { node['gitlab']['sql_server'] == 'mysql' }
 	end
 
+	postgresql_database_user node['gitlab']['database']['username'] do
+		connection      database_connection
+		password        node['gitlab']['database']['password']
+		database_name   node['gitlab']['database']['database']
+		action          [ :create, :grant ]
+		only_if { node['gitlab']['sql_server'] == 'postgresql' }
+	end
 end
 
 # ----------------------------
@@ -241,6 +258,7 @@ template "#{node['gitlab']['system_user']['home_dir']}/gitlab/config/database.ym
 	group node['gitlab']['system_user']['group']
 	mode 00644
 	variables(
+		:adapter => ( node['gitlab']['sql_server'] == 'mysql' ? 'mysql2' : 'postgresql' ),
 		:hostname => node['gitlab']['database']['hostname'],
 		:database => node['gitlab']['database']['database'],
 		:username => node['gitlab']['database']['username'],
@@ -250,12 +268,18 @@ template "#{node['gitlab']['system_user']['home_dir']}/gitlab/config/database.ym
 end
 
 # Install gem bundles and init database
+without_db = case node['gitlab']['sql_server']
+             when 'mysql' then 'postgres'
+             when 'postgresql' then 'mysql'
+             else raise RuntimeError, "Supported sql_server values: mysql, postgresql; not #{node['gitlab']['sql_server'].inspect}."
+             end
+
 rvm_shell "bundle_install" do
 	ruby_string "1.9.3-p392@gitlab"
 	user 		node['gitlab']['system_user']['name']
 	group 		node['gitlab']['system_user']['group']
 	cwd         "#{node['gitlab']['system_user']['home_dir']}/gitlab"
-	code        %{bundle install --deployment --without development test postgres && touch .bundles-installed}
+	code        "bundle install --deployment --without development test #{without_db} && touch .bundles-installed"
 	creates     "#{node['gitlab']['system_user']['home_dir']}/gitlab/.bundles-installed"
 end
 

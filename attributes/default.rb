@@ -32,6 +32,10 @@
 # Essentials
 # ----------------------------
 
+# [--- TUNABLES ---]
+
+	default['gitlab']['sql_server'] = 'mysql'
+
 # [--- WEB SERVER ---]
 
 	default['gitlab']['http']['hostname'] = fqdn
@@ -52,12 +56,12 @@
 
 	# Database Connection
 	default['gitlab']['database']['hostname'] = "localhost"
-	default['gitlab']['database']['port'] = 3306
+	default['gitlab']['database']['port'] = ( node['gitlab']['sql_server'] == 'mysql' ? 3306 : 5432 )
 	default['gitlab']['database']['database'] = "gitlabhq_production"
 	default['gitlab']['database']['username'] = "gitlab"
 
 	# Database Root User (used with manage_database)
-	default['gitlab']['database']['root_user'] = "root"
+        default['gitlab']['database']['root_user'] = ( node['gitlab']['sql_server'] == 'mysql' ? "root" : "postgres" )
 
 	# Database Root Password (only needed if using manage_database
 	# without manage_install)
