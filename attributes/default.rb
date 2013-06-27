@@ -32,6 +32,10 @@
 # Essentials
 # ----------------------------
 
+# [--- TUNABLES ---]
+
+	default['gitlab']['webserver'] = 'nginx'
+
 # [--- WEB SERVER ---]
 
 	default['gitlab']['http']['hostname'] = fqdn
@@ -136,4 +140,3 @@
 	# When should the backup run?
 	# Specify "manually" or a cron string (min hour day month weekday)
 	default['gitlab']['backup']['run'] = "manually"
-

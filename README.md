@@ -31,6 +31,9 @@ Attributes
 
 ### Web Server
 
+`node['gitlab']['webserver'] = 'nginx'` - webserver to use, set to
+`apache2` to have Apache as frontend.
+
 #### Enable SSL (development)
 1. Enable the HTTPS server: `node['gitlab']['http']['secure_port'] = 443`
 2. Let us generate a self-signed SSL for you.

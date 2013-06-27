@@ -1,0 +1,52 @@
+# -*- conf -*-
+
+<% if !!node['gitlab']['http']['port'] -%>
+<VirtualHost *:<%= node['gitlab']['http']['port'] %>>
+  ServerName <%= node['gitlab']['http']['hostname'] %>
+  DocumentRoot <%= node['gitlab']['system_user']['home_dir'] %>/gitlab/public
+
+  CustomLog <%= node['apache']['log_dir'] %>/gitlab_access.log combined
+  ErrorLog  <%= node['apache']['log_dir'] %>/gitlab_error.log
+
+  RewriteEngine on
+
+  <% if !!node['gitlab']['http']['secure_port'] && node['gitlab']['http']['force_https'] -%>
+  <%   if node['gitlab']['http']['secure_port']=="443" -%>
+  RewriteRule ^/?(.*)$ https://<%= node['gitlab']['http']['hostname'] %>/$1 [L,R=301]
+  <%   else -%>
+  RewriteRule ^/?(.*)$ https://<%= node['gitlab']['http']['hostname'] %>:<%= node['gitlab']['http']['secure_port'] %>/$1 [L,R=301]
+  <%   end -%>
+  <% else -%>
+  RewriteCond %{DOCUMENT_ROOT}/%{REQUEST_FILENAME} !-f
+  RewriteRule ^/(.*)$ http://127.0.0.1:9292%{REQUEST_URI} [P,QSA,L]
+  ProxyPassReverse / http://127.0.0.1:9292/
+  <Location "/">
+    Order allow,deny
+    Allow from all
+  </Location>
+  <% end -%>
+</VirtualHost>
+<% end -%>
+
+<% if !!node['gitlab']['http']['secure_port'] -%>
+<VirtualHost *:<%= node['gitlab']['http']['secure_port'] %>>
+  ServerName <%= node['gitlab']['http']['hostname'] %>
+  DocumentRoot <%= node['gitlab']['system_user']['home_dir'] %>/gitlab/public
+
+  CustomLog <%= node['apache']['log_dir'] %>/gitlab_access.log combined
+  ErrorLog  <%= node['apache']['log_dir'] %>/gitlab_error.log
+
+  SSLEngine on
+  SSLCertificateFile <%= node['gitlab']['http']['ssl_cert_path'] %>
+  SSLCertificateKeyFile <%= node['gitlab']['http']['ssl_key_path'] %>
+
+  RewriteEngine on
+  RewriteCond %{DOCUMENT_ROOT}/%{REQUEST_FILENAME} !-f
+  RewriteRule ^/(.*)$ http://127.0.0.1:9292%{REQUEST_URI} [P,QSA,L]
+  ProxyPassReverse / http://127.0.0.1:9292/
+  <Location "/">
+    Order allow,deny
+    Allow from all
+  </Location>
+</VirtualHost>
+<% end -%>

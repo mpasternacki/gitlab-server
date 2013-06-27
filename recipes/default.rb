@@ -404,16 +404,8 @@ end
 
 
 # ----------------------------
-# Stage 8: Nginx
+# Stage 8: Web server
 # ----------------------------
-
-include_recipe "nginx"
-
-# Template out nginx config
-template "/etc/nginx/sites-available/gitlab" do
-	source "gitlab.nginx.erb"
-	notifies :restart, "service[nginx]"
-end
 
 # Generate an SSL Cert if necessary
 bash "generate-ssl-cert" do
@@ -436,9 +428,29 @@ EOH
 	creates 	node['gitlab']['http']['ssl_cert_path']
 end
 
-# Enable gitlab site
-execute "nginx-enable-gitlab-site" do
-	command "nxensite gitlab"
-	creates node['nginx']['dir'] + "/sites-enabled/gitlab"
-	notifies :restart, "service[nginx]"
+case node['gitlab']['webserver']
+when 'nginx'
+  include_recipe "nginx"
+
+  # Template out nginx config
+  template "/etc/nginx/sites-available/gitlab" do
+    source "gitlab.nginx.erb"
+    notifies :restart, "service[nginx]"
+  end
+
+  # Enable gitlab site
+  execute "nginx-enable-gitlab-site" do
+    command "nxensite gitlab"
+    creates node['nginx']['dir'] + "/sites-enabled/gitlab"
+    notifies :restart, "service[nginx]"
+  end
+when 'apache2'
+  include_recipe "apache2"
+  include_recipe 'apache2::mod_proxy'
+  include_recipe 'apache2::mod_proxy_http'
+  include_recipe 'apache2::mod_ssl' if node['gitlab']['http']['secure_port']
+
+  web_app 'gitlab'
+else
+  raise RuntimeError, "Supported webservers are apache2 and nginx, not #{node['gitlab']['webserver'].inspect}"
 end
