@@ -57,7 +57,12 @@ Attributes
 
 ### Database
 
-GitLab uses the MySQL recipe to automatically install a database for you. If you've already got a database, you probably want to override this.
+GitLab uses the MySQL recipe to automatically install a database for
+you. You can also configure it to use PostgreSQL. If you've already
+got a database, you probably want to override this.
+
+`node['gitlab']['sql_server'] = 'mysql'` - set to `postgresql` to use
+PostgreSQL instead.
 
 #### Use your own database server
 
