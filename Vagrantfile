@@ -77,6 +77,11 @@ Vagrant.configure("2") do |config|
         :server_debian_password => 'debpass',
         :server_repl_password => 'replpass'
       },
+      :postgresql => {
+        :password => {
+          :postgres => 'postpass'
+        }
+      },
       :gitlab => {
         :http => {
           :hostname => "33.33.33.10"
