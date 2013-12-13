@@ -13,9 +13,20 @@ Need a GitLab installation?  This cookbook has you covered.
 Installation
 ------------
 
-1. Download the cookbook
+### From GitHub Repo
+
+1. Download the cookbook (`git clone git@github.com:lucasec/gitlab-server.git`)
+2. Enter the cookbook directory (`cd gitlab-server`)
 2. Run `berks install` to gather dependencies
 3. Run `berks upload` to upload to your chef-server.  We do support chef-solo, no worries!
+
+### From Opscode Community Site
+
+1. Download the cookbook (`knife cookbook site install gitlab-server`)
+2. Download the RVM cookbook (`git clone git@github.com:fnichol/chef-rvm.git`)
+3. Upload the cookbook and dependencies to your server
+
+Note that the Opscode Site version does not contain Vagrant and Berkshelf configurations. If you prefer the Vagrant/Berkshelf workflow, download the cookbook from its [official repository](https://github.com/lucasec/gitlab-server).
 
 Usage
 -----
@@ -186,6 +197,14 @@ You can configure the system user that GitLab runs under.  Chef will make this u
 - `node['gitlab']['system_user']['group'] = "git"` - System group used for all GitLab files and the user
 - `node['gitlab']['system_user']['home_dir'] = "(platform specific)"` - Home Directory path
 - `node['gitlab']['system_user']['shell'] = "(platform specific)"` - Shell executable
+
+### Versions
+
+You can change the versions of ruby, gitlab, and gitlab-shell installed by the cookbook.  As long as the installation process does not change, you can update to newer versions of Gitlab independently from this cookbook.
+
+- `node['gitlab']['ruby_version']` - Ruby version to use (in an RVM string)
+- `node['gitlab']['branch']` - Branch from the main Gitlab repository to use
+- `node['gitlab']['shell_branch']` - Branch of Gitlab-Shell to use
 
 Notes
 -----
